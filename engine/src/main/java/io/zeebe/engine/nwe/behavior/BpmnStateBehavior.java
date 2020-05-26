@@ -8,6 +8,7 @@
 package io.zeebe.engine.nwe.behavior;
 
 import io.zeebe.engine.nwe.BpmnElementContext;
+import io.zeebe.engine.nwe.BpmnProcessingException;
 import io.zeebe.engine.state.ZeebeState;
 import io.zeebe.engine.state.deployment.WorkflowState;
 import io.zeebe.engine.state.instance.ElementInstance;
@@ -73,10 +74,11 @@ public final class BpmnStateBehavior {
 
     final int activePaths = flowScopeInstance.getNumberOfActiveTokens();
     if (activePaths < 0) {
-      throw new IllegalStateException(
-          String.format(
-              "Expected number of active paths to be positive but got %d for instance %s",
-              activePaths, flowScopeInstance));
+      throw new BpmnProcessingException(
+          context,
+          "Expected number of active paths to be positive but got %d for instance %s",
+          activePaths,
+          flowScopeInstance);
     }
 
     return activePaths == 1;
@@ -179,5 +181,14 @@ public final class BpmnStateBehavior {
   public BpmnElementContext getFlowScopeContext(final BpmnElementContext context) {
     final var flowScope = getFlowScopeInstance(context);
     return context.copy(flowScope.getKey(), flowScope.getValue(), flowScope.getState());
+  }
+
+  public BpmnElementContext getParentElementInstanceContext(final BpmnElementContext context) {
+    final var parentElementInstance =
+        elementInstanceState.getInstance(context.getParentElementInstanceKey());
+    return context.copy(
+        parentElementInstance.getKey(),
+        parentElementInstance.getValue(),
+        parentElementInstance.getState());
   }
 }
